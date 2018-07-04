@@ -81,7 +81,7 @@ func runSnapshots(opts SnapshotOptions, gopts GlobalOptions, args []string) erro
 		}
 		return nil
 	}
-	PrintSnapshots(gopts.stdout, list, opts.Compact)
+	PrintSnapshots(gopts.stdout, list, nil, opts.Compact)
 
 	return nil
 }
@@ -123,7 +123,7 @@ func FilterLastSnapshots(list restic.Snapshots) restic.Snapshots {
 }
 
 // PrintSnapshots prints a text table of the snapshots in list to stdout.
-func PrintSnapshots(stdout io.Writer, list restic.Snapshots, compact bool) {
+func PrintSnapshots(stdout io.Writer, list restic.Snapshots, reasons []restic.KeepReason, compact bool) {
 
 	// always sort the snapshots so that the newer ones are listed last
 	sort.SliceStable(list, func(i, j int) bool {
@@ -152,7 +152,7 @@ func PrintSnapshots(stdout io.Writer, list restic.Snapshots, compact bool) {
 		tab.RowFormat = fmt.Sprintf("%%-8s  %%-19s  %%%ds  %%s", -maxHost)
 	}
 
-	for _, sn := range list {
+	for i, sn := range list {
 		if len(sn.Paths) == 0 {
 			continue
 		}
@@ -204,6 +204,18 @@ func PrintSnapshots(stdout io.Writer, list restic.Snapshots, compact bool) {
 			}
 
 			tab.Rows = append(tab.Rows, []interface{}{"", "", "", tag, treeElement, path})
+		}
+
+		// add the reasons to keep this snapshot
+		if !compact && len(reasons) > 0 {
+			reason := reasons[i]
+			for _, match := range reason.Matches {
+				s := fmt.Sprintf("          %v", match)
+				tab.Rows = append(tab.Rows, []interface{}{"", s, "", "", "", ""})
+			}
+			if len(reason.Matches) > 0 {
+				tab.Rows = append(tab.Rows, []interface{}{"", "", "", "", "", ""})
+			}
 		}
 	}
 

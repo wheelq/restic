@@ -40,6 +40,7 @@ type ForgetOptions struct {
 	Tags    restic.TagLists
 	Paths   []string
 	Compact bool
+	Explain bool
 
 	// Grouping
 	GroupBy string
@@ -73,6 +74,7 @@ func init() {
 	f.StringVarP(&forgetOptions.GroupBy, "group-by", "g", "host,paths", "string for grouping snapshots by host,paths,tags")
 	f.BoolVarP(&forgetOptions.DryRun, "dry-run", "n", false, "do not delete anything, just print what would be done")
 	f.BoolVar(&forgetOptions.Prune, "prune", false, "automatically run the 'prune' command if snapshots have been removed")
+	f.BoolVar(&forgetOptions.Explain, "explain", false, "show reason why a particular snapshot was kept")
 
 	f.SortFlags = false
 }
@@ -206,17 +208,17 @@ func runForget(opts ForgetOptions, gopts GlobalOptions, args []string) error {
 			}
 			Verbosef(":\n\n")
 
-			keep, remove := restic.ApplyPolicy(snapshotGroup, policy)
+			keep, remove, reasons := restic.ApplyPolicy(snapshotGroup, policy)
 
 			if len(keep) != 0 && !gopts.Quiet {
 				Printf("keep %d snapshots:\n", len(keep))
-				PrintSnapshots(globalOptions.stdout, keep, opts.Compact)
+				PrintSnapshots(globalOptions.stdout, keep, reasons, opts.Compact)
 				Printf("\n")
 			}
 
 			if len(remove) != 0 && !gopts.Quiet {
 				Printf("remove %d snapshots:\n", len(remove))
-				PrintSnapshots(globalOptions.stdout, remove, opts.Compact)
+				PrintSnapshots(globalOptions.stdout, remove, nil, opts.Compact)
 				Printf("\n")
 			}
 
