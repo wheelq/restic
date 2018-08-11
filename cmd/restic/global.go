@@ -360,7 +360,7 @@ func OpenRepository(opts GlobalOptions) (*repository.Repository, error) {
 		return nil, err
 	}
 
-	if stdoutIsTerminal() {
+	if stdoutIsTerminal() && !opts.JSON {
 		id := s.Config().ID
 		if len(id) > 8 {
 			id = id[:8]
