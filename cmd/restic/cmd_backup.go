@@ -397,7 +397,7 @@ func runBackup(opts BackupOptions, gopts GlobalOptions, term *termstatus.Termina
 
 	var t tomb.Tomb
 
-	if !gopts.JSON {
+	if gopts.verbosity >= 2 && !gopts.JSON {
 		term.Print("open repository\n")
 	}
 
